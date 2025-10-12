@@ -429,8 +429,15 @@ static Hashmap_##K##_##V* Hashmap_##K##_##V##_new(int capacity) {               
  * @return 指向新创建的哈希表的指针。
  * @example my_map = hashmap_new_with_capacity(cstr, int, 1024);
  */
-#define hashmap_new_with_capacity(K, V, capacity) ({ /* ... */ })
-
+#define hashmap_new_with_capacity(K, V, capacity) ({                                                                \
+    typeof(capacity) _capacity = (capacity);                                                                        \
+    !(_capacity > 0 && (_capacity & (_capacity - 1)) == 0) ? (                                                      \
+        fprintf(stderr, "%s:%d: HashMap capacity must be a power of two.", __FILE__, __LINE__),                     \
+        fflush(stderr),                                                                                             \
+        _Exit(-1),                                                                                                  \
+        NULL                                                                                                        \
+    ) : Hashmap_##K##_##V##_new(_capacity);                                                                         \
+})
 
 // === 公共API: 核心操作宏 ===
 
@@ -552,5 +559,6 @@ static Hashmap_##K##_##V* Hashmap_##K##_##V##_new(int capacity) {               
  * @example const int* val = hashmap_iterator_current_value(&it);
  */
 #define hashmap_iterator_current_value(iter) (iter).map->fns->iterator_current_value(&(iter))
+
 
 #endif // HASHMAP_H

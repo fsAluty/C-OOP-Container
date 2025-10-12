@@ -74,6 +74,18 @@ _Generic(e,                                                                     
 // === 公共API: 定义宏 ===
 
 /**
+ * @file hashmap.h
+ * @brief 一个类型安全的、仅头文件的、C语言泛型哈希表实现 (C-OOP-Container)。
+ *
+ * 本库以面向对象的思想为核心，通过编译期宏生成代码，旨在提供现代C++ STL般的
+ * 便利性，同时保持C语言的性能与控制力。
+ *
+ * @version 2.0
+ * @date 2024-05-21
+ */
+// ... (内部辅助函数和宏)
+// === 公共API: 定义宏 ===
+/**
  * @brief 为指定的键值对类型定义一个具有默认行为的新哈希表。
  *
  * 这是创建哈希表的主要宏，适用于C语言的基本类型（整型、浮点型、指针、const char*），
@@ -439,18 +451,58 @@ static Hashmap_##K##_##V* Hashmap_##K##_##V##_new(int capacity) {               
     ) : Hashmap_##K##_##V##_new(_capacity);                                                                         \
 })
 
+// === 公共API: 类型与构造函数宏 ===
+/**
+ * @brief 声明一个指向特定哈希表类型的指针。
+ * @param K 在 HASHMAP_DEFINE 中使用的键类型。
+ * @param V 在 HASHMAP_DEFINE 中使用的值类型。
+ * @example hashmap(cstr, int) my_map;
+ */
+#define hashmap(K, V) Hashmap_##K##_##V*
+/**
+ * @brief 创建一个具有默认初始容量 (16) 的新哈希表。
+ * @param K 键的类型。
+ * @param V 值的类型。
+ * @return 指向新创建的哈希表的指针。
+ * @example my_map = hashmap_new(cstr, int);
+ */
+#define hashmap_new(K, V) Hashmap_##K##_##V##_new(16)
+/**
+ * @brief 创建一个具有指定初始容量的新哈希表。
+ *
+ * 容量**必须**是2的幂。此项将在运行时进行检查，若不满足则程序会中止。
+ *
+ * @param K 键的类型。
+ * @param V 值的类型。
+ * @param capacity 初始容量，必须是2的幂。
+ * @return 指向新创建的哈希表的指针。
+ * @example my_map = hashmap_new_with_capacity(cstr, int, 1024);
+ */
+#define hashmap_new_with_capacity(K, V, capacity) ({                                                                \
+    typeof(capacity) _capacity = (capacity);                                                                        \
+    !(_capacity > 0 && (_capacity & (_capacity - 1)) == 0) ? (                                                      \
+        fprintf(stderr, "%s:%d: HashMap capacity must be a power of two.", __FILE__, __LINE__),                     \
+        fflush(stderr),                                                                                             \
+        _Exit(-1),                                                                                                  \
+        NULL                                                                                                        \
+    ) : Hashmap_##K##_##V##_new(_capacity);                                                                         \
+})
 // === 公共API: 核心操作宏 ===
-
 /**
  * @brief 在哈希表中插入或更新一个键值对。
+ *
  * 如果键已存在，则更新其值。否则，创建一个新条目。
+ * 本宏使用可变参数 `...` 来接收 `value`，以支持复合字面量等包含逗号的值类型。
+ *
  * @param map (hashmap(K,V)) 哈希表实例。
  * @param key (K) 键。
- * @param value (V) 值。
- * @example hashmap_put(my_map, "hello", 1);
+ * @param ... (V value) 与键关联的值。
+ *
+ * @example
+ * hashmap_put(my_map, "学号-01", 101);
+ * hashmap_put(roster_map, "Alice", (Student){101, 95.5f});
  */
-#define hashmap_put(map, key, value) map->fns->put(map, key, value)
-
+#define hashmap_put(map, key, ...) (map)->fns->put((map), (key), __VA_ARGS__)
 /**
  * @brief 检索与给定键关联的值。
  * @param map (hashmap(K,V)) 哈希表实例。
@@ -458,8 +510,7 @@ static Hashmap_##K##_##V* Hashmap_##K##_##V##_new(int capacity) {               
  * @return (const V*) 如果找到键，则返回一个指向值的只读指针；否则返回 NULL。
  * @example const int* val = hashmap_get(my_map, "hello"); if (val) { printf("%d", *val); }
  */
-#define hashmap_get(map, key) map->fns->get(map, key)
-
+#define hashmap_get(map, key) (map)->fns->get((map), (key))
 /**
  * @brief 从哈希表中移除一个键值对。
  * @param map (hashmap(K,V)) 哈希表实例。
@@ -467,8 +518,7 @@ static Hashmap_##K##_##V* Hashmap_##K##_##V##_new(int capacity) {               
  * @return (bool) 如果成功移除了一个元素，则返回 `true`；否则返回 `false`。
  * @example bool removed = hashmap_remove(my_map, "hello");
  */
-#define hashmap_remove(map, key) map->fns->remove(map, key)
-
+#define hashmap_remove(map, key) (map)->fns->remove((map), (key))
 /**
  * @brief 检查哈希表是否包含指定的键。
  * @param map (hashmap(K,V)) 哈希表实例。
@@ -476,47 +526,38 @@ static Hashmap_##K##_##V* Hashmap_##K##_##V##_new(int capacity) {               
  * @return (bool) 如果键存在，则返回 `true`；否则返回 `false`。
  * @example if (hashmap_contains(my_map, "world")) { ... }
  */
-#define hashmap_contains(map, key) map->fns->contains(map, key)
-
-
+#define hashmap_contains(map, key) (map)->fns->contains((map), (key))
 // === 公共API: 工具与生命周期宏 ===
-
 /**
  * @brief 将哈希表的内容显示到给定的文件流。
  * @param map (hashmap(K,V)) 哈希表实例。
  * @param stream (FILE*) 输出流 (例如, stdout, stderr, 或一个文件指针)。
  * @example hashmap_display(my_map, stdout); // 输出: {"key1": val1, "key2": val2}
  */
-#define hashmap_display(map, stream) map->fns->display(map, stream)
-
+#define hashmap_display(map, stream) (map)->fns->display((map), (stream))
 /**
  * @brief 返回哈希表中键值对的数量。
  * @param map (hashmap(K,V)) 哈希表实例。
  * @return (int) 哈希表的当前大小。
  * @example int count = hashmap_size(my_map);
  */
-#define hashmap_size(map) map->size
-
+#define hashmap_size(map) (map)->size
 /**
  * @brief 从哈希表中移除所有键值对，使其变为空。
- * 此操作不会释放哈希表结构体本身。
+ * 此操作不会释放哈希表结构体本身。对于持有动态资源的值，需要用户自行处理内存释放。
  * @param map (hashmap(K,V)) 哈希表实例。
  * @example hashmap_clear(my_map);
  */
-#define hashmap_clear(map) map->fns->clear(map)
-
+#define hashmap_clear(map) (map)->fns->clear(map)
 /**
  * @brief 释放与哈希表相关的所有内存。
  * 包括所有条目、内部条目数组以及哈希表结构体本身。
- * 调用后，该哈希表指针将变为无效。
+ * 调用后，该哈希表指针将变为无效。对于持有动态资源的值，需要用户在调用此前手动释放。
  * @param map (hashmap(K,V)) 哈希表实例。
  * @example hashmap_free(my_map);
  */
-#define hashmap_free(map) map->fns->free(map)
-
-
+#define hashmap_free(map) (map)->fns->free(map)
 // === 公共API: 迭代器宏 ===
-
 /**
  * @brief 声明一个哈希表迭代器变量。
  * @param K 键的类型。
@@ -524,7 +565,6 @@ static Hashmap_##K##_##V* Hashmap_##K##_##V##_new(int capacity) {               
  * @example hashmap_iterator(cstr, int) it;
  */
 #define hashmap_iterator(K, V) struct HashmapIterator_##K##_##V
-
 /**
  * @brief 为哈希表创建一个迭代器。
  * 迭代器初始位置在第一个元素之前。
@@ -532,8 +572,7 @@ static Hashmap_##K##_##V* Hashmap_##K##_##V##_new(int capacity) {               
  * @return (hashmap_iterator(K,V)) 一个用于该哈希表的迭代器。
  * @example hashmap_iterator(cstr, int) it = hashmap_get_iterator(my_map);
  */
-#define hashmap_get_iterator(map) map->fns->get_iterator(map)
-
+#define hashmap_get_iterator(map) (map)->fns->get_iterator(map)
 /**
  * @brief 将迭代器推进到哈希表中的下一个元素。
  * @param iter (hashmap_iterator(K,V)*) 指向迭代器的指针。
@@ -541,7 +580,6 @@ static Hashmap_##K##_##V* Hashmap_##K##_##V##_new(int capacity) {               
  * @example while (hashmap_iterator_next(&it)) { ... }
  */
 #define hashmap_iterator_next(iter) (iter).map->fns->iterator_next(&(iter))
-
 /**
  * @brief 检索迭代器当前位置的键。
  * 只有在成功调用 `hashmap_iterator_next` 后才能调用此宏。
@@ -550,7 +588,6 @@ static Hashmap_##K##_##V* Hashmap_##K##_##V##_new(int capacity) {               
  * @example const cstr* key = hashmap_iterator_current_key(&it);
  */
 #define hashmap_iterator_current_key(iter) (iter).map->fns->iterator_current_key(&(iter))
-
 /**
  * @brief 检索迭代器当前位置的值。
  * 只有在成功调用 `hashmap_iterator_next` 后才能调用此宏。
@@ -559,6 +596,5 @@ static Hashmap_##K##_##V* Hashmap_##K##_##V##_new(int capacity) {               
  * @example const int* val = hashmap_iterator_current_value(&it);
  */
 #define hashmap_iterator_current_value(iter) (iter).map->fns->iterator_current_value(&(iter))
-
 
 #endif // HASHMAP_H

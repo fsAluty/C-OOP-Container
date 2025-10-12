@@ -5,7 +5,17 @@
 #include <stdbool.h>
 
 // === 公共API: 定义宏 ===
-
+/**
+ * @file vector.h
+ * @brief 一个类型安全的、仅头文件的、C语言泛型动态数组实现 (C-OOP-Container)。
+ *
+ * 本库以面向对象的思想为核心，通过编译期宏生成代码，旨在提供一个简单、高效且
+ * 易于使用的动态数组容器。
+ *
+ * @version 2.0
+ * @date 2024-05-21
+ */
+// === 公共API: 定义宏 ===
 /**
  * @brief 为指定的元素类型定义一个具有默认行为的新向量。
  *
@@ -289,12 +299,19 @@ static Vector_##T* Vector_##T##_new(int capacity) {                             
 
 /**
  * @brief 将一个值追加到向量的末尾。
+ *
  * 如果需要，向量的容量会自动增加。
+ * 本宏使用可变参数 `...` 来接收 `value`，这是为了完美支持
+ * 复合字面量 (Compound Literals) 作为参数，例如 `(Student){1, "Alice"}`。
+ *
  * @param vec (vector(T)) 向量实例。
- * @param value (T) 要压入的值。
- * @example vector_push(my_vec, 42);
+ * @param ... (T value) 要压入的值。请将要压入的单个值作为第二个参数传入。
+ *
+ * @example
+ * vector_push(my_vec, 42);
+ * vector_push(student_vec, (Student){101, "Alice"});
  */
-#define vector_push(vec, value) vec->fns->push(vec, value)
+#define vector_push(vec, ...) (vec)->fns->push((vec), __VA_ARGS__)
 
 /**
  * @brief从向量中移除最后一个元素。
@@ -302,7 +319,7 @@ static Vector_##T* Vector_##T##_new(int capacity) {                             
  * @return (bool) 如果成功移除了一个元素，则返回 `true`；如果向量已空，则返回 `false`。
  * @example vector_pop(my_vec);
  */
-#define vector_pop(vec) vec->fns->pop(vec)
+#define vector_pop(vec) (vec)->fns->pop(vec)
 
 /**
  * @brief 检索特定索引处的元素。
@@ -311,7 +328,7 @@ static Vector_##T* Vector_##T##_new(int capacity) {                             
  * @return (const T*) 如果索引有效，则返回指向元素的只读指针；否则返回 NULL。
  * @example const int* val = vector_get(my_vec, 0);
  */
-#define vector_get(vec, index) vec->fns->get(vec, index)
+#define vector_get(vec, index) (vec)->fns->get((vec), (index))
 
 /**
  * @brief 检索向量的最后一个元素。
@@ -319,27 +336,32 @@ static Vector_##T* Vector_##T##_new(int capacity) {                             
  * @return (const T*) 指向最后一个元素的只读指针；如果向量为空，则返回 NULL。
  * @example const int* last_val = vector_last(my_vec);
  */
-#define vector_last(vec) vec->fns->last(vec)
+#define vector_last(vec) (vec)->fns->last(vec)
 
 /**
  * @brief 用一个新值更新特定索引处的元素。
+ *
+ * 本宏使用可变参数 `...` 来接收 `value`，以支持复合字面量。
+ *
  * @param vec (vector(T)) 向量实例。
  * @param index (int) 要设置元素的零基索引。
- * @param value (T) 新值。
+ * @param ... (T value) 新的值。
  * @return (bool) 如果索引有效且元素被设置，则返回 `true`；否则返回 `false`。
  * @example vector_set(my_vec, 0, 99);
  */
-#define vector_set(vec, index, value) vec->fns->set(vec, index, value)
-
+#define vector_set(vec, index, ...) (vec)->fns->set((vec), (index), __VA_ARGS__)
 /**
  * @brief 在特定索引处插入一个值，并将后续元素后移。
+ *
+ * 本宏使用可变参数 `...` 来接收 `value`，以支持复合字面量。
+ *
  * @param vec (vector(T)) 向量实例。
  * @param index (int) 要插入位置的零基索引。
- * @param value (T) 要插入的值。
+ * @param ... (T value) 要插入的值。
  * @return (bool) 如果插入成功，则返回 `true`；如果索引越界，则返回 `false`。
  * @example vector_insert(my_vec, 1, 123);
  */
-#define vector_insert(vec, index, value) vec->fns->insert(vec, index, value)
+#define vector_insert(vec, index, ...) (vec)->fns->insert((vec), (index), __VA_ARGS__)
 
 /**
  * @brief 移除特定索引处的元素。
@@ -348,7 +370,7 @@ static Vector_##T* Vector_##T##_new(int capacity) {                             
  * @return (bool) 如果成功移除了一个元素，则返回 `true`；如果索引越界，则返回 `false`。
  * @example vector_remove(my_vec, 1);
  */
-#define vector_remove(vec, index) vec->fns->remove(vec, index)
+#define vector_remove(vec, index) (vec)->fns->remove((vec), (index))
 
 
 // === 公共API: 搜索与查询宏 ===
@@ -361,7 +383,7 @@ static Vector_##T* Vector_##T##_new(int capacity) {                             
  * @return (int) 值的第一个出现位置的索引；如果未找到，则返回 -1。
  * @example int pos = vector_index_of(my_vec, 42);
  */
-#define vector_index_of(vec, value) vec->fns->index_of(vec, value)
+#define vector_index_of(vec, value) (vec)->fns->index_of((vec), (value))
 
 /**
  * @brief 从向量中移除第一次出现的给定值。
@@ -370,7 +392,7 @@ static Vector_##T* Vector_##T##_new(int capacity) {                             
  * @return (bool) 如果找到并移除了一个元素，则返回 `true`；否则返回 `false`。
  * @example vector_remove_element(my_vec, 42);
  */
-#define vector_remove_element(vec, value) vec->fns->remove_element(vec, value)
+#define vector_remove_element(vec, value) (vec)->fns->remove_element((vec), (value))
 
 /**
  * @brief 检查向量是否包含特定值。
@@ -379,7 +401,7 @@ static Vector_##T* Vector_##T##_new(int capacity) {                             
  * @return (bool) 如果值存在，则返回 `true`；否则返回 `false`。
  * @example if (vector_contains(my_vec, 99)) { ... }
  */
-#define vector_contains(vec, value) vec->fns->contains(vec, value)
+#define vector_contains(vec, value) (vec)->fns->contains((vec), (value))
 
 
 // === 公共API: 工具与生命周期宏 ===
@@ -390,7 +412,7 @@ static Vector_##T* Vector_##T##_new(int capacity) {                             
  * @param stream (FILE*) 输出流 (例如, stdout)。
  * @example vector_display(my_vec, stdout); // 输出: [elem1, elem2, elem3]
  */
-#define vector_display(vec, stream) vec->fns->display(vec, stream)
+#define vector_display(vec, stream) (vec)->fns->display((vec), (stream))
 
 /**
  * @brief 返回向量中元素的数量。
@@ -398,7 +420,7 @@ static Vector_##T* Vector_##T##_new(int capacity) {                             
  * @return (int) 向量的当前大小。
  * @example int count = vector_size(my_vec);
  */
-#define vector_size(vec) vec->size
+#define vector_size(vec) (vec)->size
 
 /**
  * @brief 从向量中移除所有元素，使其变为空。
@@ -406,7 +428,7 @@ static Vector_##T* Vector_##T##_new(int capacity) {                             
  * @param vec (vector(T)) 向量实例。
  * @example vector_clear(my_vec);
  */
-#define vector_clear(vec) vec->fns->clear(vec)
+#define vector_clear(vec) (vec)->fns->clear(vec)
 
 /**
  * @brief 释放与向量相关的所有内存。
@@ -415,7 +437,7 @@ static Vector_##T* Vector_##T##_new(int capacity) {                             
  * @param vec (vector(T)) 向量实例。
  * @example vector_free(my_vec);
  */
-#define vector_free(vec) vec->fns->free(vec)
+#define vector_free(vec) (vec)->fns->free(vec)
 
 
 // === 公共API: 迭代器宏 ===
@@ -434,7 +456,7 @@ static Vector_##T* Vector_##T##_new(int capacity) {                             
  * @return (vector_iterator(T)) 一个用于该向量的迭代器。
  * @example vector_iterator(int) it = vector_get_iterator(my_vec);
  */
-#define vector_get_iterator(vec) vec->fns->get_iterator(vec)
+#define vector_get_iterator(vec) (vec)->fns->get_iterator(vec)
 
 /**
  * @brief 将迭代器推进到向量中的下一个元素。

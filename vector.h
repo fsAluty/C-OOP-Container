@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-// === 公共API: 定义宏 ===
 /**
  * @file vector.h
  * @brief 一个类型安全的、仅头文件的、C语言泛型动态数组实现 (C-OOP-Container)。
@@ -15,7 +14,9 @@
  * @version 1.0
  * @date 2025-10-13
  */
+
 // === 公共API: 定义宏 ===
+
 /**
  * @brief 为指定的元素类型定义一个具有默认行为的新向量。
  *

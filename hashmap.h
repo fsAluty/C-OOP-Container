@@ -6,6 +6,17 @@
 #include <string.h>
 #include <stdbool.h>
 
+/**
+ * @file hashmap.h
+ * @brief 一个类型安全的、仅头文件的、C语言泛型哈希表实现 (C-OOP-Container)。
+ *
+ * 本库以面向对象的思想为核心，通过编译期宏生成代码，旨在提供现代C++ STL般的
+ * 便利性，同时保持C语言的性能与控制力。
+ *
+ * @version 1.0
+ * @date 2025-10-13
+ */
+
 // --- Internal Helper Functions ---
 static int Hashmap_hash_cstr(const char* key) {
     const char* str = (const char*) key;
@@ -73,18 +84,6 @@ _Generic(e,                                                                     
 
 // === 公共API: 定义宏 ===
 
-/**
- * @file hashmap.h
- * @brief 一个类型安全的、仅头文件的、C语言泛型哈希表实现 (C-OOP-Container)。
- *
- * 本库以面向对象的思想为核心，通过编译期宏生成代码，旨在提供现代C++ STL般的
- * 便利性，同时保持C语言的性能与控制力。
- *
- * @version 1.0
- * @date 2025-10-13
- */
-// ... (内部辅助函数和宏)
-// === 公共API: 定义宏 ===
 /**
  * @brief 为指定的键值对类型定义一个具有默认行为的新哈希表。
  *
@@ -175,7 +174,7 @@ HASHMAP_DEFINE_CUSTOM(K, V,                                                     
  */
 #define HASHMAP_DEFINE_CUSTOM(K, V, HashFn, EqualsFn, DisplayKeyFn, DisplayValueFn)                                 \
                                                                                                                     \
-typedef struct _Hashmap_##K##_##V Hashmap_##K##_##V;                                                                \
+typedef struct __Hashmap_##K##_##V Hashmap_##K##_##V;                                                               \
                                                                                                                     \
 struct HashmapEntry_##K##_##V {                                                                                     \
     K key;                                                                                                          \
@@ -208,7 +207,7 @@ struct Hashmap_##K##_##V##_Functions {                                          
     void (*free)(Hashmap_##K##_##V* self);                                                                          \
 };                                                                                                                  \
                                                                                                                     \
-struct _Hashmap_##K##_##V {                                                                                         \
+struct __Hashmap_##K##_##V {                                                                                        \
     const struct Hashmap_##K##_##V##_Functions* fns;                                                                \
     struct HashmapEntry_##K##_##V** entries;                                                                        \
     int size;                                                                                                       \

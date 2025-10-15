@@ -411,46 +411,6 @@ static Hashmap_##K##_##V* Hashmap_##K##_##V##_new(int capacity) {               
 }                                                                                                                   \
 
 // === 公共API: 类型与构造函数宏 ===
-
-/**
- * @brief 声明一个指向特定哈希表类型的指针。
- * @param K 在 HASHMAP_DEFINE 中使用的键类型。
- * @param V 在 HASHMAP_DEFINE 中使用的值类型。
- * @example hashmap(cstr, int) my_map;
- */
-#define hashmap(K, V) Hashmap_##K##_##V*
-
-/**
- * @brief 创建一个具有默认初始容量 (16) 的新哈希表。
- * @param K 键的类型。
- * @param V 值的类型。
- * @return 指向新创建的哈希表的指针。
- * @example my_map = hashmap_new(cstr, int);
- */
-#define hashmap_new(K, V) Hashmap_##K##_##V##_new(16)
-
-/**
- * @brief 创建一个具有指定初始容量的新哈希表。
- *
- * 容量**必须**是2的幂。此项将在运行时进行检查。
- *
- * @param K 键的类型。
- * @param V 值的类型。
- * @param capacity 初始容量，必须是2的幂。
- * @return 指向新创建的哈希表的指针。
- * @example my_map = hashmap_new_with_capacity(cstr, int, 1024);
- */
-#define hashmap_new_with_capacity(K, V, capacity) ({                                                                \
-    typeof(capacity) _capacity = (capacity);                                                                        \
-    !(_capacity > 0 && (_capacity & (_capacity - 1)) == 0) ? (                                                      \
-        fprintf(stderr, "%s:%d: HashMap capacity must be a power of two.", __FILE__, __LINE__),                     \
-        fflush(stderr),                                                                                             \
-        _Exit(-1),                                                                                                  \
-        NULL                                                                                                        \
-    ) : Hashmap_##K##_##V##_new(_capacity);                                                                         \
-})
-
-// === 公共API: 类型与构造函数宏 ===
 /**
  * @brief 声明一个指向特定哈希表类型的指针。
  * @param K 在 HASHMAP_DEFINE 中使用的键类型。

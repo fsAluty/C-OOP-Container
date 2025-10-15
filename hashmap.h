@@ -380,7 +380,7 @@ static void Hashmap_##K##_##V##_free(Hashmap_##K##_##V* self) {                 
     free(self);                                                                                                     \
 }                                                                                                                   \
                                                                                                                     \
-const struct Hashmap_##K##_##V##_Functions HASHMAP_##K##V##FUNCTIONS = {                                            \
+const static struct Hashmap_##K##_##V##_Functions HASHMAP_##K##V##FUNCTIONS = {                                     \
     .hash = HashFn,                                                                                                 \
     .equals = EqualsFn,                                                                                             \
     .display_key = DisplayKeyFn,                                                                                    \

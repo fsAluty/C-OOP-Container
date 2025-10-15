@@ -237,7 +237,7 @@ static void Vector_##T##_free(Vector_##T* self) {                               
     free(self);                                                                     \
 }                                                                                   \
                                                                                     \
-const struct Vector_##T##_Functions VECTOR_##T##_FUNCTIONS = {                      \
+const static struct Vector_##T##_Functions VECTOR_##T##_FUNCTIONS = {               \
     .equals = EqualsFn,                                                             \
     .display_element = DisplayFn,                                                   \
     .display = Vector_##T##_display,                                                \
